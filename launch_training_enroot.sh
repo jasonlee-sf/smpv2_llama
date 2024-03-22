@@ -17,7 +17,7 @@ set -ex;
 #########################
 model_type=llama_v2
 model_size=$1
-weights=/fsx/jason-lee/ckpt/sftv4-4nodes-bsz1-exp004-safetensors-v2
+# weights=/fsx/jason-lee/ckpt/sftv4-4nodes-bsz1-exp004-safetensors-v2
 
 #Toggle this to use synthetic data
 use_synthetic_data=1
@@ -154,7 +154,7 @@ srun -l "${ARGS[@]}" torchrun "${TORCHRUN_ARGS[@]}" /workspace/train_external.py
             --tensor_parallel_degree 1 \
             --fp8 $3 \
             --use_synthetic_data $use_synthetic_data \
-            --hf_pretrained_model_name_or_dir $weights \
+            # --hf_pretrained_model_name_or_dir $weights \
             # --training_dir $TRAIN_DATA_PATH \
             # --test_dir $TEST_DATA_PATH \
             # --dataset_type hf \
