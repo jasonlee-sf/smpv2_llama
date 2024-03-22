@@ -107,7 +107,7 @@ def tokenize_dataset(
     num_proc=64,
     overwrite_cache=False,
 ):
-    cache_dir = "/fsx/datasets/.cache/datasets/"
+    cache_dir = "/fsx/jason-lee/data/.cache/datasets/"
     if dataset_path is not None:
         raw_datasets = load_dataset(dataset_path, num_proc=num_proc, cache_dir=cache_dir)
     else:
