@@ -16,7 +16,8 @@ set -ex;
 
 #########################
 model_type=llama_v2
-model_size=70b
+model_size=$1
+weights=/fsx/jason-lee/ckpt/sftv4-4nodes-bsz1-exp004-safetensors-v2
 
 #Toggle this to use synthetic data
 use_synthetic_data=1
@@ -30,6 +31,8 @@ export CHECKPOINT_PATH=/fsx/PATH_TO_CHECKPOINT
 
 # default variables for Enroot
 : "${IMAGE:=$(pwd)/smpv2.sqsh}"
+: "${DATA_PATH:=/fsx}"
+: "${FSX_MOUNT:=$(pwd):$DATA_PATH}"
 : "${HYPERPOD_PATH:="/var/log/aws/clusters":"/var/log/aws/clusters"}"
 : "${TRAIN_DATA_PATH:=$TRAINING_DIR:$TRAINING_DIR}"
 : "${TEST_DATA_PATH:=$TEST_DIR:$TEST_DIR}"
@@ -105,6 +108,8 @@ elif [ "$model_size" == "70b" ]; then
     DEFAULT_SHARD_DEGREE=64
 fi
 
+DEFAULT_SHARD_DEGREE=$2
+
 
 if [ -z "$shard_degree" ]; then
     SHARD_DEGREE=$DEFAULT_SHARD_DEGREE
@@ -122,6 +127,7 @@ fi
 declare -a ARGS=(
     --container-image $IMAGE
     --container-mounts $HYPERPOD_PATH #,$TRAIN_DATA_PATH,$TEST_DATA_PATH,$CHECKPOINT_PATH
+    --container-mounts $FSX_MOUNT
 )
 
 declare -a TORCHRUN_ARGS=(
@@ -146,7 +152,9 @@ srun -l "${ARGS[@]}" torchrun "${TORCHRUN_ARGS[@]}" /workspace/train_external.py
             --use_smp_implementation 1 \
             --max_context_width 4096 \
             --tensor_parallel_degree 1 \
+            --fp8 $3 \
             --use_synthetic_data $use_synthetic_data \
+            --hf_pretrained_model_name_or_dir $weights \
             # --training_dir $TRAIN_DATA_PATH \
             # --test_dir $TEST_DATA_PATH \
             # --dataset_type hf \
