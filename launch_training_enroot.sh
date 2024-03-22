@@ -127,7 +127,7 @@ fi
 declare -a ARGS=(
     --container-image $IMAGE
     --container-mounts $HYPERPOD_PATH #,$TRAIN_DATA_PATH,$TEST_DATA_PATH,$CHECKPOINT_PATH
-    --container-mounts $FSX_MOUNT
+    # --container-mounts $FSX_MOUNT
 )
 
 declare -a TORCHRUN_ARGS=(
