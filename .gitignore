@@ -1,0 +1,14 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Slurm logs
+*.out
+*.txt
+
+# Docker images
+*.sqsh
