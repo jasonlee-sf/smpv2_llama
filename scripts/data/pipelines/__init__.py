@@ -2,6 +2,7 @@ from data.pipelines.data_pipeline import DataPipeline
 from data.pipelines.dummy_data_pipeline import DummyDataPipeline
 from data.pipelines.gpt_data_pipeline import GPTDataPipeline
 from data.pipelines.hf_data_pipeline import HFDataPipeline
+from data.pipelines.sfr_data_pipeline import SFRDataPipeline
 
 
 def create_data_pipeline(
@@ -35,6 +36,16 @@ def create_data_pipeline(
             train_batch_size=args.train_batch_size,
             dataset_val_path=args.test_dir if args.validation_freq else None,
             val_batch_size=args.val_batch_size if args.validation_freq else None,
+            seed=args.seed,
+            num_workers=args.data_num_workers,
+            resume_from_sequence_number=resume_from_sequence_number,
+            dp_rank=dp_rank,
+            dp_size=dp_size,
+        )
+    elif args.dataset_type == "sfr":
+        data_pipeline = SFRDataPipeline(
+            pretokenized_path=args.pretokenized_path,
+            train_batch_size=args.train_batch_size,
             seed=args.seed,
             num_workers=args.data_num_workers,
             resume_from_sequence_number=resume_from_sequence_number,

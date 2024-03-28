@@ -123,9 +123,9 @@ def train_step(  # pylint: disable=too-many-arguments,too-many-branches,too-many
 
     if batch_idx == 0:
         # checking only on batch 0 to reduce checks during runtime
-        assert (
-            input_ids.shape[1] == args.max_context_width
-        ), f"Input data passed {input_ids.shape} does not respect max_context_width set. Note that this is not strictly necessary, but added to prevent mistakes. If you intend to do this, please remove this check."
+        # assert (
+        #     input_ids.shape[1] == args.max_context_width
+        # ), f"Input data passed {input_ids.shape} does not respect max_context_width set. Note that this is not strictly necessary, but added to prevent mistakes. If you intend to do this, please remove this check."
         assert (
             input_ids.shape[1] <= args.max_context_width
         ), "Input data passed is larger than max_context_width for model. You need to change max_context_width so model can expect larger sequences"
@@ -138,12 +138,32 @@ def train_step(  # pylint: disable=too-many-arguments,too-many-branches,too-many
     if batch_idx >= nvtx_warmup_iters:
         torch.cuda.nvtx.range_push("forward")
 
+    input_shape = input_ids.size()
+    input_ids = input_ids.view(-1, input_shape[-1])
+    device = input_ids.device
+    position_ids = torch.arange(0, input_shape[-1], dtype=torch.long, device=device)
+    position_ids = position_ids.unsqueeze(0)
+
+    logger.info(f"************{input_ids.shape=}*************")
+    logger.info(f"************{labels.shape=}*************")
+    logger.info(f"************{position_ids.shape=}*************")
+
     # uses default causal mask
     if args.fp8==1 and args.use_smp_implementation==1:
         with transformer_engine.pytorch.fp8_autocast(enabled=args.fp8, fp8_recipe=fp8_recipe, fp8_group=tsm.state.world_process_group):
-            loss = model(input_ids=input_ids, attention_mask=None, labels=labels)["loss"]
+            loss = model(
+                input_ids=input_ids,
+                attention_mask=None,
+                labels=labels,
+                position_ids=position_ids,
+            )["loss"]
     else:
-        loss = model(input_ids=input_ids, attention_mask=None, labels=labels)["loss"]
+        loss = model(
+            input_ids=input_ids,
+            attention_mask=None,
+            labels=labels,
+            position_ids=position_ids,
+        )["loss"]
 
     if batch_idx >= nvtx_warmup_iters:
         # for forward
@@ -334,15 +354,15 @@ def train(
                     )
 
             # evaluate on validation
-            if args.validation_freq and not total_steps % args.validation_freq:
-                cur_state = np.random.get_state()
-                torch.cuda.empty_cache()
-                val_loss, val_ppl = eval_model(model, data_pipeline, args.validation_batches)
-                if global_rank == 0:
-                    log_and_write_eval_metrics(writers, display_step, val_loss, val_ppl)
-                model = model.train()
-                if args.preserve_np_state > 0:
-                    np.random.set_state(cur_state)
+            # if args.validation_freq and not total_steps % args.validation_freq:
+            #     cur_state = np.random.get_state()
+            #     torch.cuda.empty_cache()
+            #     val_loss, val_ppl = eval_model(model, data_pipeline, args.validation_batches)
+            #     if global_rank == 0:
+            #         log_and_write_eval_metrics(writers, display_step, val_loss, val_ppl)
+            #     model = model.train()
+            #     if args.preserve_np_state > 0:
+            #         np.random.set_state(cur_state)
 
             # checkpoint
             if not total_steps % args.checkpoint_freq[0]:

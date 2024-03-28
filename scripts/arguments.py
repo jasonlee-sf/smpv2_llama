@@ -164,7 +164,7 @@ def parse_args():  # pylint: disable=too-many-statements
     input_grp = parser.add_argument_group(title="inputs", description="location for data")
 
     input_grp.add_argument(
-        "--dataset_type", type=str, default="gpt_jsonl", choices=["gpt_jsonl", "hf"]
+        "--dataset_type", type=str, default="sfr", choices=["gpt_jsonl", "hf", "sfr"]
     )
     input_grp.add_argument("--data_num_workers", type=int, default=0)
 
@@ -175,6 +175,7 @@ def parse_args():  # pylint: disable=too-many-statements
     # gpt dataset
     input_grp.add_argument("--zipped_data", type=int, default=1, help="input data is zipped files")
     input_grp.add_argument("--training_dir", type=str, default=os.getenv("SM_CHANNEL_TRAIN"))
+    input_grp.add_argument("--pretokenized_path", type=str)
     input_grp.add_argument("--test_dir", type=str, default=os.getenv("SM_CHANNEL_TEST"))
 
     ### MODEL

@@ -20,11 +20,12 @@ model_size=$1
 weights=/fsx/jason-lee/ckpt/sftv4-4nodes-bsz1-exp004-safetensors-v2
 out_dir=/fsx/jason-lee/log/03_2024/22-test2
 scr_dir=/fsx/jason-lee/scr/smpv2_llama
+pretok_path=/fsx/jason-lee/data/03_2024/26_sftv4.001-raw.pt
 
 mkdir -p $out_dir
 
 #Toggle this to use synthetic data
-use_synthetic_data=1
+use_synthetic_data=0
 
 
 # To run training on your own data  set Training/Test Data path  -> Change this to the tokenized dataset path in Fsx. Acceptable formats are huggingface (arrow) and Jsonlines.
@@ -41,6 +42,7 @@ export CHECKPOINT_PATH=/fsx/PATH_TO_CHECKPOINT
 : "${TRAIN_DATA_PATH:=$TRAINING_DIR:$TRAINING_DIR}"
 : "${TEST_DATA_PATH:=$TEST_DIR:$TEST_DIR}"
 : "${CHECKPOINT_PATH:=$CHECKPOINT_PATH:$CHECKPOINT_PATH}"
+: "${PRETOK_DATA_PATH:=$pretok_path}"
 ############
 
 
@@ -130,7 +132,7 @@ fi
 
 declare -a ARGS=(
     --container-image $IMAGE
-    --container-mounts $HYPERPOD_PATH,$FSX_MOUNT,$weights,$out_dir,$scr_dir
+    --container-mounts $HYPERPOD_PATH,$FSX_MOUNT,$weights,$out_dir,$scr_dir,$PRETOK_DATA_PATH
 )
 
 declare -a TORCHRUN_ARGS=(
@@ -157,8 +159,11 @@ srun -l "${ARGS[@]}" torchrun "${TORCHRUN_ARGS[@]}" $scr_dir/scripts/train_exter
             --tensor_parallel_degree 1 \
             --fp8 $3 \
             --use_synthetic_data $use_synthetic_data \
-            --hf_pretrained_model_name_or_dir $weights \
-            --checkpoint_dir $out_dir \
+            --pretokenized_path $PRETOK_DATA_PATH \
+
+            # --hf_pretrained_model_name_or_dir $weights \
+
+            #--checkpoint_dir $out_dir \
             # --training_dir $TRAIN_DATA_PATH \
             # --test_dir $TEST_DATA_PATH \
             # --dataset_type hf \
