@@ -263,8 +263,8 @@ def get_model_config(args):
         model_config.hidden_act = 'silu'
         model_config.hidden_size = 6144
         model_config.initializer_range = 0.02
-        model_config.intermediate_size = 16384
-        model_config.max_position_embeddings = 16384
+        model_config.intermediate_size = 8192
+        model_config.max_position_embeddings = 8192
         model_config.model_type = 'llama'
         model_config.num_attention_heads = 48
         model_config.num_hidden_layers = 46
