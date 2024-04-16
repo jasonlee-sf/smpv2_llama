@@ -119,8 +119,10 @@ def create_model(args, model_config, dtype, pretrained_model_weights=None):
             model = AutoModelForCausalLM.from_pretrained(pretrained_model_weights, attn_implementation="flash_attention_2")
     else:
         if pversion.parse(transformers.__version__) < pversion.parse("4.37.1"):
+            _logger.info(f"Loading w/o flash-attn")
             model = AutoModelForCausalLM.from_config(model_config)
         else:
+            _logger.info(f"Loading with flash-attn")
             model = AutoModelForCausalLM.from_config(model_config, attn_implementation="flash_attention_2")
 
     if pversion.parse(transformers.__version__) >= pversion.parse("4.37.1"):
@@ -235,48 +237,48 @@ def get_model_config(args):
     elif "llama_v2" in args.model_type:
         from transformers import LlamaConfig
 
-        model_config = LlamaConfig(
-            vocab_size=args.vocab_size,
-            hidden_size=args.hidden_width,
-            intermediate_size=args.llama_intermediate_size,
-            num_hidden_layers=args.num_layers,
-            num_attention_heads=args.num_heads,
-            num_key_value_heads=args.num_key_value_heads,
-            hidden_act="silu",
-            max_position_embeddings=args.max_context_width,
-            initializer_range=args.initializer_range,
-            rms_norm_eps=1e-5,
-            use_cache=False,
-            pretraining_tp=1,
-            tie_word_embeddings=False,
-            rope_scaling=None,
-        )
-        # model_config = LlamaConfig()
-        # # Config for XGen-22B
-        # model_config.architectures = ['LlamaForCausalLM']
-        # model_config.attention_bias = False
-        # model_config.attention_dropout = 0.0
-        # model_config.bos_token_id = 1
-        # model_config.eos_token_id = 2
-        # model_config.hidden_act = 'silu'
-        # model_config.hidden_size = 6144
-        # model_config.initializer_range = 0.02
-        # model_config.intermediate_size = 16384
-        # model_config.max_position_embeddings = 16384
-        # model_config.model_type = 'llama'
-        # model_config.num_attention_heads = 48
-        # model_config.num_hidden_layers = 46
-        # model_config.num_key_value_heads = 48
-        # model_config.pretraining_tp = 1
-        # model_config.rms_norm_eps = 1e-06
-        # model_config.rope_theta = 17000
-        # model_config.tie_word_embeddings = False
-        # model_config.torch_dtype = 'bfloat16'
-        # # Comment out use_cache because
-        # # FSDP complains about it
-        # # model_config.use_cache = True
-        # model_config.vocab_size = 102400
-        # # model_config._attn_implementation = 'flash_attention_2'
+        # model_config = LlamaConfig(
+        #     vocab_size=args.vocab_size,
+        #     hidden_size=args.hidden_width,
+        #     intermediate_size=args.llama_intermediate_size,
+        #     num_hidden_layers=args.num_layers,
+        #     num_attention_heads=args.num_heads,
+        #     num_key_value_heads=args.num_key_value_heads,
+        #     hidden_act="silu",
+        #     max_position_embeddings=args.max_context_width,
+        #     initializer_range=args.initializer_range,
+        #     rms_norm_eps=1e-5,
+        #     use_cache=False,
+        #     pretraining_tp=1,
+        #     tie_word_embeddings=False,
+        #     rope_scaling=None,
+        # )
+        model_config = LlamaConfig()
+        # Config for XGen-22B
+        model_config.architectures = ['LlamaForCausalLM']
+        model_config.attention_bias = False
+        model_config.attention_dropout = 0.0
+        model_config.bos_token_id = 1
+        model_config.eos_token_id = 2
+        model_config.hidden_act = 'silu'
+        model_config.hidden_size = 6144
+        model_config.initializer_range = 0.02
+        model_config.intermediate_size = 8192
+        model_config.max_position_embeddings = 8192
+        model_config.model_type = 'llama'
+        model_config.num_attention_heads = 48
+        model_config.num_hidden_layers = 46
+        model_config.num_key_value_heads = 48
+        model_config.pretraining_tp = 1
+        model_config.rms_norm_eps = 1e-06
+        model_config.rope_theta = 17000
+        model_config.tie_word_embeddings = False
+        model_config.torch_dtype = 'bfloat16'
+        # Comment out use_cache because
+        # FSDP complains about it
+        # model_config.use_cache = True
+        model_config.vocab_size = 102400
+        # model_config._attn_implementation = 'flash_attention_2'
     elif "mistral" in args.model_type:
         from transformers import MistralConfig
 

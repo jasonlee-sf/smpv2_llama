@@ -17,7 +17,12 @@ set -ex;
 #########################
 model_type=llama_v2
 model_size=$1
-# weights=/fsx/jason-lee/ckpt/sftv4-4nodes-bsz1-exp004-safetensors-v2
+weights=/fsx/jason-lee/ckpt/sftv4-4nodes-bsz1-exp004-safetensors-v2
+out_dir=/fsx/jason-lee/log/03_2024/22-test2
+scr_dir=/fsx/jason-lee/scr/smpv2_llama
+CONTEXT_LENGTH=8192
+
+mkdir -p $out_dir
 
 #Toggle this to use synthetic data
 use_synthetic_data=1
@@ -126,7 +131,7 @@ fi
 
 declare -a ARGS=(
     --container-image $IMAGE
-    --container-mounts $HYPERPOD_PATH,$FSX_MOUNT
+    --container-mounts $HYPERPOD_PATH,$FSX_MOUNT,$weights,$out_dir,$scr_dir
 )
 
 declare -a TORCHRUN_ARGS=(
@@ -138,8 +143,8 @@ declare -a TORCHRUN_ARGS=(
     --rdzv_endpoint=$(hostname) \
 )
 
-srun -l "${ARGS[@]}" torchrun "${TORCHRUN_ARGS[@]}" /workspace/train_external.py \
-            --train_batch_size 4 \
+srun -l "${ARGS[@]}" torchrun "${TORCHRUN_ARGS[@]}" $scr_dir/scripts/train_external.py \
+            --train_batch_size 1 \
             --max_steps 10000 \
             --hidden_width $HIDDEN_WIDTH \
             --num_layers $NUM_LAYERS \
@@ -149,11 +154,12 @@ srun -l "${ARGS[@]}" torchrun "${TORCHRUN_ARGS[@]}" /workspace/train_external.py
             --model_type $model_type \
             --profile_nsys 1 \
             --use_smp_implementation 1 \
-            --max_context_width 4096 \
+            --max_context_width $CONTEXT_LENGTH \
             --tensor_parallel_degree 1 \
             --fp8 $3 \
             --use_synthetic_data $use_synthetic_data \
-            # --hf_pretrained_model_name_or_dir $weights \
+            --hf_pretrained_model_name_or_dir $weights \
+            # --checkpoint_dir $out_dir \
             # --training_dir $TRAIN_DATA_PATH \
             # --test_dir $TEST_DATA_PATH \
             # --dataset_type hf \

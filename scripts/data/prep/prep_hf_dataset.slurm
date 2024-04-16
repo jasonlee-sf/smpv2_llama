@@ -7,23 +7,26 @@
 
 : "${IMAGE:=/fsx/jason-lee/scr/smpv2_llama/smpv2.sqsh}"
 : "${HYPERPOD_PATH:="/var/log/aws/clusters":"/var/log/aws/clusters"}"
-
-declare -a ARGS=(
-    --container-image $IMAGE
-    --container-mounts $HYPERPOD_PATH #,$TRAIN_DATA_PATH,$TEST_DATA_PATH,$CHECKPOINT_PATH
-)
+: "${DATA_PATH:=/fsx}"
+: "${FSX_MOUNT:=$(pwd):$DATA_PATH}"
 
 OUTPUT_DIR=/fsx/jason-lee/data/wikicorpus__raw_en/llama/4096/
 mkdir -p $OUTPUT_DIR
 TOKENIZER=Salesforce/xgen2-oai
 
+declare -a ARGS=(
+    --container-image $IMAGE
+    --container-mounts $HYPERPOD_PATH,$FSX_MOUNT,$OUTPUT_DIR
+)
+
 ## Below examples for llama tokenizer
 
-srun -l "${ARGS[@]}" python data/prep/prepare_hf_dataset.py --dataset_name wikicorpus \
+srun -l "${ARGS[@]}" python data/prep/prepare_hf_dataset.py \
+    --dataset_name wikicorpus \
     --dataset_config_name raw_en \
-    --val_split_percentage 20 \
+    --val_split_percentage 10 \
     --hf_tokenizer_name $TOKENIZER \
-    --seq_len 4096 \
+    --seq_len 16384 \
     --output_dir $OUTPUT_DIR
 
 ## C4

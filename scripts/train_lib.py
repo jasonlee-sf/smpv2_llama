@@ -67,7 +67,8 @@ logger = get_logger()
 
 def finetune_with_pretrained_weights_check(args) -> bool:
     # returns True for start of finetuning only
-    return args.hf_pretrained_model_name_or_dir is not None and args.resume_from_checkpoint is None
+    # return args.hf_pretrained_model_name_or_dir is not None and args.resume_from_checkpoint is None
+    return args.hf_pretrained_model_name_or_dir is not None
 
 
 def finetune_check(args):
@@ -246,6 +247,30 @@ def train(
         if isinstance(data_pipeline, GPTDataPipeline):
             # with new path if incremented at the end of this for loop
             data_pipeline.create_train_dataset()
+
+        # user_content = {
+        #     "cli_args": args.__dict__,
+        #     "model_config": model_config,
+        #     "num_params": num_params,
+        #     "total_steps": total_steps,
+        #     "epoch": epoch,
+        #     "start_train_path_index": 0,
+        #     "resume_from_sequence_number": 0,
+        # }
+        # subdir = f"{args.model_type}-{total_steps}steps"
+        # save_checkpoint(
+        #     model,
+        #     optimizer,
+        #     lr_scheduler,
+        #     user_content,
+        #     get_sharding_strategy(args.sharding_strategy),
+        #     args.checkpoint_dir[0],
+        #     subdir,
+        #     args.num_kept_checkpoints[0],
+        #     checkpointing_pg_metadata,
+        #     tensor_parallel_degree=int(args.tensor_parallel_degree),
+        #     checkpoint_type=args.checkpoint_type,
+        # )
 
         for batch_idx, input_data in enumerate(data_pipeline.train_dataloader):
             if total_steps >= args.max_steps:
@@ -468,13 +493,7 @@ def main(args):
     else:
         dtype = torch.get_default_dtype()
 
-    if finetune_check(args):
-        from transformers import AutoConfig
-
-        # Using config for finetune mode, else uses args to create model
-        model_config = AutoConfig.from_pretrained(args.hf_pretrained_model_name_or_dir)
-    else:
-        model_config = get_model_config(args)
+    model_config = get_model_config(args)
 
     delayed_param_initer = None
     with tsm_utils.timeit(True, "Model creation", global_rank):
